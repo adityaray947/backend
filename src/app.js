@@ -1,8 +1,11 @@
 import express from "express"
 import cors from "cors"
 import cookieParser from "cookie-parser"
+import multer from 'multer';
 
 const app = express()
+const upload = multer();
+app.use(upload.none());
 
 app.use(cors({
     origin: process.env.CORS_ORIGIN,

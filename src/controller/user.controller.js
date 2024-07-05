@@ -1,47 +1,41 @@
 import { asyncHandler } from '../utils/asyncHandler.js';
-import  {errorHandler} from "../utils/error.js";
-import {user} from "../models/user.model.js";
-import { ApiResoponse } from '../utils/response.js';
-
+import  {errorHandler} from "../utils/error.js"
+import { User } from '../models/user.model.js';
+import {ApiResponse} from "../utils/response.js"
 const registerUser = asyncHandler(async (req, res) => {
     
-    const{username,email,fullname,password}=req.body
-    console.log("fullname :",fullname);
+    const {fullname, email, username, password } = req.body
+    console.log("email: ", email);
 
-    if(
-        [fullname,email,username].some((field)=>
-            field?.trim()===""
-        )
-    )
-    {
-            throw new errorHandler(400,"All fields are required")
-        }
-    
-    const existeduser=user.findOne({
-        $or:[{email},{username}]
-    })
-    if(existeduser){
-        throw new errorHandler(409,"user already existed with same name or email ")
+    if (
+        [fullname, email, username, password].some((field) => field?.trim() === "")
+    ) {
+        throw new ApiError(400, "All fields are required")
     }
-    const User=await user.create({
-        fullname,
-        username:username.toLowerCase(),
-        email,
-        password
-
+    const existedUser = await User.findOne({
+        $or: [{ username }, { email }]
     })
-    const checkuser=await user.findById(user._id).select(
+    if (existedUser) {
+        throw new errorHandler(409, "User with email or username already exists")
+    }
+    const user = await User.create({
+        fullname,
+        email, 
+        password,
+        username: username.toLowerCase()
+    })
+    const createdUser = await User.findById(user._id).select(
         "-password -refreshToken"
     )
-    if(!checkuser){
-        throw new errorHandler(500,"somethin went wrong")
+
+    if (!createdUser) {
+        throw new ApiError(500, "Something went wrong while registering the user")
     }
 
     return res.status(201).json(
-
-        new ApiResoponse(200,checkuser,"user registered successfully")
+        new ApiResponse(200, createdUser, "User registered Successfully")
     )
-
+    
 
 }
 
